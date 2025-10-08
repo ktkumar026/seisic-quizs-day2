@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Seismic quiz challenge day2</title>
+  <style>
+    :root{
+      --bg:#f2f2f4; /* light gray page bg */
+      --card:#e1e1e3; /* card bg */
+      --accent1:#ff6b6b; /* coral */
+      --accent2:#6b8cff; /* blue */
+      --accent3:#ffd56b; /* yellow */
+      --text:#1f2937;
+      --muted:#6b7280;
+    }
+    html,body{height:100%;margin:0;font-family:Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; background:linear-gradient(135deg,var(--bg),#ececf0);color:var(--text)}
+    .wrap{max-width:920px;margin:36px auto;padding:24px}
+    header{display:flex;align-items:center;gap:16px}
+    .logo{width:64px;height:64px;border-radius:12px;background:linear-gradient(135deg,var(--accent2),var(--accent1));display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:18px;box-shadow:0 6px 18px rgba(31,41,55,0.08)}
+    h1{margin:0;font-size:20px}
+    p.lead{color:var(--muted);margin:6px 0 18px}
+
+    .card{background:var(--card);border-radius:14px;padding:20px;box-shadow:0 8px 30px rgba(31,41,55,0.06)}
+    .question-wrap{display:flex;gap:18px;align-items:flex-start}
+    .qnum{font-weight:700;color:var(--muted);min-width:54px}
+    .qbox{flex:1}
+    .qtext{font-size:18px;margin:0 0 14px}
+
+    .options{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    button.opt{padding:12px 14px;border-radius:10px;border:0;background:white;cursor:pointer;font-weight:600;box-shadow:0 4px 12px rgba(0,0,0,0.04)}
+    button.opt:hover{transform:translateY(-2px)}
+    button.opt.correct{outline:3px solid rgba(107,140,255,0.18);background:linear-gradient(90deg,rgba(107,140,255,0.07),white)}
+    button.opt.wrong{outline:3px solid rgba(255,107,107,0.12);background:linear-gradient(90deg,rgba(255,107,107,0.04),white)}
+    .meta{display:flex;justify-content:space-between;align-items:center;margin-top:16px;color:var(--muted)}
+    .progress{height:12px;background:linear-gradient(90deg,#d0d0d3,#e7e7ea);border-radius:999px;padding:2px;flex:1;margin-left:12px}
+    .progress > i{display:block;height:8px;background:linear-gradient(90deg,var(--accent2),var(--accent1));border-radius:100px;width:0%}
+    .controls{display:flex;gap:10px;margin-top:18px}
+    .btn{padding:10px 14px;border-radius:10px;border:0;cursor:pointer;font-weight:700}
+    .btn.primary{background:linear-gradient(90deg,var(--accent2),var(--accent1));color:white}
+    .btn.ghost{background:transparent;border:1px solid rgba(31,41,55,0.06)}
+
+    footer{margin-top:18px;color:var(--muted);font-size:13px}
+
+    @media (max-width:640px){.options{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="logo">SQC</div>
+      <div>
+        <h1>Seismic quiz challenge — Day 2</h1>
+        <p class="lead">A colourful, gray themed quiz — 10 multiple choice questions. Select an option to see if you're right. Good luck!</p>
+      </div>
+    </header>
+
+    <main class="card" id="quiz-card">
+      <div class="question-wrap">
+        <div class="qnum" id="qnum">Q1</div>
+        <div class="qbox">
+          <p class="qtext" id="qtext">Question text will appear here</p>
+          <div class="options" id="options"></div>
+          <div class="meta">
+            <div id="feedback" style="min-height:18px"></div>
+            <div style="display:flex;align-items:center;gap:8px">
+              <div style="font-size:13px;color:var(--muted)">Progress</div>
+              <div class="progress" aria-hidden="true"><i id="progressbar"></i></div>
+            </div>
+          </div>
+          <div class="controls">
+            <button class="btn ghost" id="prev">Prev</button>
+            <button class="btn ghost" id="next">Next</button>
+            <button class="btn primary" id="restart">Restart</button>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <footer>
+      Built for: <strong>Seismic quiz challenge day2</strong> · Theme: Gray + colourful accents
+    </footer>
+  </div>
+
+  <script>
+    // Quiz data: 10 questions, 4 options each, with correct index (0-3)
+    const quiz = [
+      {
+        q: "What is Seismic?",
+        opts: [
+          "A layer-2 scaling solution for Ethereum",
+          "A permissioned blockchain for enterprise use",
+          "A Layer-1 blockchain capable of encrypting arbitrary smart contracts",
+          "A sidechain for DeFi bridging"
+        ],
+        correct: 2
+      },
+      {
+        q: "Which of the following is not one of the three core properties enabled by Seismic’s architecture?",
+        opts: ["Encrypted global state","Encrypted memory access","Encrypted orchestration","Encrypted consensus protocol"],
+        correct: 3
+      },
+      {
+        q: "In Seismic, what is an `stype`?",
+        opts: ["A type of consensus algorithm","A special shielded data type (e.g. suint, sbool, saddress)","A storage layout format","A versioning mechanism for contracts"],
+        correct: 1
+      },
+      {
+        q: "Which restriction applies to `stype` variables in Seismic?",
+        opts: ["They can be used as constant values","They can be returned in public or external functions","They cannot be used as constants","They must always be global variables"],
+        correct: 2
+      },
+      {
+        q: "What happens when you cast a non-stype (e.g. uint256) to an stype (e.g. suint256)?",
+        opts: ["It is done implicitly","Observers can see the original value in traces","It is disallowed entirely","It works but hides the value completely"],
+        correct: 1
+      },
+      {
+        q: "In the Walnut contract analogy, what does 'hitting' the walnut do?",
+        opts: ["It increments the hidden secret number","It reduces the shell (durability) until it cracks","It reveals the secret number immediately","It resets the game state"],
+        correct: 1
+      },
+      {
+        q: "What is required for a user to call the look() function in the Walnut contract?",
+        opts: ["The shell must still be intact","The user must not have contributed (no hits)","The shell must be cracked, and the caller must have contributed at least one hit","Anyone can call it anytime"],
+        correct: 2
+      },
+      {
+        q: "When using collections (arrays or mappings) with stype variables, what extra privacy property emerges?",
+        opts: ["The type of the collection becomes hidden","Observers don’t know which element (key) is being read or written","The collection size becomes encrypted","Access to the collection is blocked completely"],
+        correct: 1
+      },
+      {
+        q: "Which of these is not a supported stype basic type in Seismic?",
+        opts: ["suint / sint","sbool","sstring","saddress"],
+        correct: 2
+      },
+      {
+        q: "Why was Seismic designed with encryption at the protocol level (rather than layering privacy atop an existing chain)?",
+        opts: ["To reduce latency by avoiding encryption overhead","Because app-level encryption cannot be retrofitted onto transparent chains","To allow only shielded token transfers","To disable smart contracts entirely"],
+        correct: 1
+      }
+    ];
+
+    let cur = 0;
+    const answers = Array(quiz.length).fill(null); // store user's choice indexes
+
+    const qnumEl = document.getElementById('qnum');
+    const qtextEl = document.getElementById('qtext');
+    const optionsEl = document.getElementById('options');
+    const feedbackEl = document.getElementById('feedback');
+    const progressBar = document.getElementById('progressbar');
+    const prevBtn = document.getElementById('prev');
+    const nextBtn = document.getElementById('next');
+    const restartBtn = document.getElementById('restart');
+
+    function render(){
+      const item = quiz[cur];
+      qnumEl.textContent = `Q${cur+1}`;
+      qtextEl.textContent = item.q;
+      optionsEl.innerHTML = '';
+      item.opts.forEach((o,i) => {
+        const b = document.createElement('button');
+        b.className = 'opt';
+        b.textContent = `${String.fromCharCode(65+i)}. ${o}`;
+        b.disabled = answers[cur] !== null; // lock after answer
+        b.addEventListener('click', ()=> select(i, b));
+        optionsEl.appendChild(b);
+      });
+      updateProgress();
+      feedbackEl.textContent = answers[cur] === null ? '' : (answers[cur] === item.correct ? '✅ Correct' : '❌ Wrong');
+      // style answered buttons
+      if(answers[cur] !== null){
+        Array.from(optionsEl.children).forEach((btn, idx)=>{
+          btn.disabled = true;
+          if(idx === item.correct) btn.classList.add('correct');
+          if(idx === answers[cur] && answers[cur] !== item.correct) btn.classList.add('wrong');
+        });
+      }
+    }
+
+    function select(idx, btn){
+      answers[cur] = idx;
+      const correctIdx = quiz[cur].correct;
+      if(idx === correctIdx){
+        btn.classList.add('correct');
+        feedbackEl.textContent = '✅ Correct';
+      } else {
+        btn.classList.add('wrong');
+        // mark correct too
+        const correctBtn = optionsEl.children[correctIdx];
+        if(correctBtn) correctBtn.classList.add('correct');
+        feedbackEl.textContent = '❌ Wrong';
+      }
+      // disable others
+      Array.from(optionsEl.children).forEach(b=>b.disabled=true);
+      updateProgress();
+    }
+
+    function updateProgress(){
+      const answered = answers.filter(x => x !== null).length;
+      const pct = Math.round((answered / quiz.length) * 100);
+      progressBar.style.width = pct + '%';
+    }
+
+    prevBtn.addEventListener('click', ()=>{
+      if(cur>0) { cur--; render(); }
+    });
+    nextBtn.addEventListener('click', ()=>{
+      if(cur<quiz.length-1){ cur++; render(); }
+    });
+    restartBtn.addEventListener('click', ()=>{
+      if(confirm('Restart quiz and clear answers?')){ cur=0; for(let i=0;i<answers.length;i++)answers[i]=null; render(); }
+    });
+
+    // keyboard support
+    document.addEventListener('keydown', (e)=>{
+      if(e.key === 'ArrowRight') { if(cur<quiz.length-1) { cur++; render(); } }
+      if(e.key === 'ArrowLeft') { if(cur>0) { cur--; render(); } }
+      if(e.key >= '1' && e.key <= '4'){
+        const idx = parseInt(e.key)-1;
+        const btn = optionsEl.children[idx];
+        if(btn && !btn.disabled) btn.click();
+      }
+    });
+
+    // initial render
+    render();
+  </script>
+</body>
+</html>
